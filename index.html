@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MXSA - ระบบคลังป้ายสินค้า & คลังเฟอร์นิเจอร์</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            
+            <!-- Brand Logo MXSA Layout -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchApp('tags')">
+                <div class="w-12 h-12 rounded-xl bg-slate-900 p-2 flex items-center justify-center text-white">
+                    <div class="text-center font-bold leading-tight tracking-wider text-xs">
+                        <div class="text-sky-400">MX</div>
+                        <div class="text-emerald-400">SA</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-xl font-bold tracking-tight text-slate-900">MXSA</h1>
+                        <span id="currentSystemBadge" class="text-xs font-semibold px-2 py-0.5 bg-sky-100 text-sky-700 rounded-md">คลังป้ายสินค้า</span>
+                    </div>
+                    <p class="text-xs text-slate-500">ระบบคลังป้ายสินค้า & คลังเฟอร์นิเจอร์</p>
+                </div>
+            </div>
+
+            <!-- Main App Switcher Tabs -->
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button id="tabTagsBtn" onclick="switchApp('tags')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm bg-white text-slate-900">
+                    <span>🏷️ คลังภาพป้าย</span>
+                </button>
+                <button id="tabFurnitureBtn" onclick="switchApp('furniture')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900">
+                    <span>🪑 คลังเฟอร์นิเจอร์</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== TAGS APP VIEW ==================== -->
+        <div id="tagsAppView" class="space-y-6">
+            <!-- Stats & Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-sky-50 text-sky-600 rounded-lg text-xl font-bold">🏷️</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">ป้ายทั้งหมดในระบบ</p>
+                        <h3 id="statTotalTags" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg text-xl font-bold">📂</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">หมวดหมู่ทั้งหมด</p>
+                        <h3 id="statTotalCategories" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-lg text-xl font-bold">⭐</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">ป้ายติดดาว / รายการโปรด</p>
+                        <h3 id="statStarredTags" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="w-full sm:w-72 relative">
+                    <input type="text" id="tagSearchInput" oninput="renderTags()" placeholder="ค้นหาชื่อป้าย, รายละเอียด..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                </div>
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                    <button onclick="openCategoryModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition flex items-center space-x-1">
+                        <span>📁 จัดการหมวดหมู่</span>
+                    </button>
+                    <button onclick="openTagModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center space-x-1">
+                        <span>➕ เพิ่มป้ายสินค้า</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories Filter Pills -->
+            <div id="categoryFilterContainer" class="flex items-center space-x-2 overflow-x-auto pb-2">
+                <!-- Dynamically injected -->
+            </div>
+
+            <!-- Tags Grid -->
+            <div id="tagsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically injected -->
+            </div>
+        </div>
+
+
+        <!-- ==================== FURNITURE APP VIEW ==================== -->
+        <div id="furnitureAppView" class="space-y-6 hidden">
+            <!-- Stats & Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg text-xl font-bold">🪑</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">รายการเฟอร์นิเจอร์ทั้งหมด</p>
+                        <h3 id="statTotalFurn" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg text-xl font-bold">📍</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">สถานที่ / จุดติดตั้ง</p>
+                        <h3 id="statTotalLocations" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-lg text-xl font-bold">📦</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">ยอดคงเหลือรวมในคลัง</p>
+                        <h3 id="statTotalQty" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="w-full sm:w-72 relative">
+                    <input type="text" id="furnSearchInput" oninput="renderFurniture()" placeholder="ค้นหาชื่อเฟอร์นิเจอร์, รหัส..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                </div>
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                    <button onclick="openLocationModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition flex items-center space-x-1">
+                        <span>📍 จัดการสถานที่</span>
+                    </button>
+                    <button onclick="openFurnitureModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center space-x-1">
+                        <span>➕ เพิ่มเฟอร์นิเจอร์</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Locations Grid Section -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+                        <span>🏢 ภาพรวมสถานที่และจุดติดตั้งเฟอร์นิเจอร์</span>
+                    </h3>
+                </div>
+                <div id="locationGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Dynamically injected -->
+                </div>
+            </div>
+
+            <!-- Furniture Inventory Table / Grid -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800">รายการเฟอร์นิเจอร์ทั้งหมดในคลัง</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider">
+                                <th class="py-3 px-4">รูปภาพ</th>
+                                <th class="py-3 px-4">ชื่อเฟอร์นิเจอร์ / รายละเอียด</th>
+                                <th class="py-3 px-4">หมวดหมู่</th>
+                                <th class="py-3 px-4">คงเหลือ</th>
+                                <th class="py-3 px-4 text-center">จัดการสต็อก (เบิก/คืน)</th>
+                                <th class="py-3 px-4 text-right">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="furnitureTableBody" class="divide-y divide-slate-200">
+                            <!-- Dynamically injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Modal: Tag Form -->
+    <div id="tagModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="tagModalTitle" class="text-lg font-bold text-slate-900">เพิ่มป้ายสินค้าใหม่</h3>
+                <button onclick="closeTagModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+            </div>
+            <form id="tagForm" onsubmit="handleTagFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="tagEditId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อป้ายสินค้า *</label>
+                    <input type="text" id="tagName" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">หมวดหมู่ *</label>
+                        <select id="tagCategory" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <!-- Dynamically injected -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">ขนาด / สเปค</label>
+                        <input type="text" id="tagSize" placeholder="เช่น 60x120 ซม." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ลิงก์รูปภาพป้าย (URL)</label>
+                    <input type="url" id="tagImage" placeholder="https://..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="tagDescription" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t">
+                    <button type="button" onclick="closeTagModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-sm">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal: Category Management -->
+    <div id="categoryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-900">จัดการหมวดหมู่ป้าย</h3>
+                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+            </div>
+            <div class="flex space-x-2">
+                <input type="text" id="newCategoryName" placeholder="ชื่อหมวดหมู่ใหม่..." class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <button onclick="addCategory()" class="px-4 py-2 bg-sky-600 text-white rounded-lg text-xs font-bold">เพิ่ม</button>
+            </div>
+            <div id="categoryListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <!-- Dynamically injected -->
+            </div>
+            <div class="flex justify-end pt-3 border-t">
+                <button onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal: Furniture Form -->
+    <div id="furnitureModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="furnitureModalTitle" class="text-lg font-bold text-slate-900">เพิ่มเฟอร์นิเจอร์ใหม่</h3>
+                <button onclick="closeFurnitureModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+            </div>
+            <form id="furnitureForm" onsubmit="handleFurnitureFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="furnEditId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อเฟอร์นิเจอร์ *</label>
+                    <input type="text" id="furnName" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">หมวดหมู่ *</label>
+                        <input type="text" id="furnCategory" required placeholder="เช่น โต๊ะ, เก้าอี้, ตู้" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">จำนวนเริ่มต้น *</label>
+                        <input type="number" id="furnQty" min="0" value="1" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ลิงก์รูปภาพ (URL)</label>
+                    <input type="url" id="furnImage" placeholder="https://..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="furnDescription" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t">
+                    <button type="button" onclick="closeFurnitureModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal: Location Management -->
+    <div id="locationModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-900">จัดการสถานที่ติดตั้ง</h3>
+                <button onclick="closeLocationModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+            </div>
+            <div class="space-y-3">
+                <input type="text" id="newLocName" placeholder="ชื่อสถานที่ / ห้อง..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="newLocDesc" placeholder="รายละเอียดจุดติดตั้ง..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button onclick="addLocation()" class="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold">เพิ่มสถานที่</button>
+            </div>
+            <div id="locationListContainer" class="space-y-2 max-h-50 overflow-y-auto pr-1">
+                <!-- Dynamically injected -->
+            </div>
+            <div class="flex justify-end pt-3 border-t">
+                <button onclick="closeLocationModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal: Borrow / Return Furniture -->
+    <div id="borrowReturnModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="borrowModalTitle" class="text-lg font-bold text-slate-900">เบิกใช้งานเฟอร์นิเจอร์</h3>
+                <button onclick="closeBorrowModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+            </div>
+            <form id="borrowForm" onsubmit="handleBorrowSubmit(event)" class="space-y-4">
+                <input type="hidden" id="borrowFurnId">
+                <input type="hidden" id="borrowType">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">เลือกสถานที่ / จุดติดตั้ง *</label>
+                    <select id="borrowLocation" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <!-- Dynamically injected -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">จำนวน *</label>
+                    <input type="number" id="borrowQty" min="1" value="1" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t">
+                    <button type="button" onclick="closeBorrowModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm">ยืนยันทำรายการ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal: Confirm Delete Action -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+            <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
+            <h3 id="deleteModalText" class="text-sm font-bold text-slate-800">คุณต้องการลบรายการนี้ใช่หรือไม่?</h3>
+            <div class="flex justify-center space-x-3 pt-2">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">ยกเลิก</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-sm">ยืนยันลบ</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+        // --- Storage State ---
+        let currentApp = 'tags';
+        let activeTagCategory = 'ทั้งหมด';
+
+        let tagCategories = JSON.parse(localStorage.getItem('mxsa_tag_categories')) || ['ป้ายเตือน', 'ป้ายความปลอดภัย', 'ป้ายบอกทาง', 'ป้ายต้อนรับ'];
+        let tagsList = JSON.parse(localStorage.getItem('mxsa_tags_list')) || [
+            { id: 't_1', name: 'ป้ายระวังพื้นลื่น', category: 'ป้ายเตือน', size: '30x40 ซม.', image: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400', description: 'ติดตั้งบริเวณพื้นที่เปียกชื้น', starred: true },
+            { id: 't_2', name: 'ป้ายทางออกฉุกเฉิน', category: 'ป้ายความปลอดภัย', size: '20x40 ซม.', image: 'https://images.unsplash.com/photo-1541888946425-d0fbb18f86f6?w=400', description: 'เรืองแสง เห็นชัดเจนในที่มืด', starred: false }
+        ];
+
+        let locationsList = JSON.parse(localStorage.getItem('mxsa_locations_list')) || [
+            { id: 'l_1', name: 'ชั้น 1 แผนกต้อนรับ', desc: 'โซนห้องรับรองลูกค้า' },
+            { id: 'l_2', name: 'ชั้น 2 สำนักงานใหญ่', desc: 'ห้องประชุมผู้บริหาร' }
+        ];
+        let furnitureList = JSON.parse(localStorage.getItem('mxsa_furniture_list')) || [
+            { id: 'f_1', name: 'เก้าอี้สำนักงานพนักพิงสูง', category: 'เก้าอี้', qty: 15, image: 'https://images.unsplash.com/photo-1580481077494-e3299ac25294?w=400', description: 'ปรับระดับได้ ล้อเลื่อน 5 แฉก' },
+            { id: 'f_2', name: 'โต๊ะทำงานไม้โมเดิร์น', category: 'โต๊ะ', qty: 8, image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=400', description: 'ขนาด 140x70 ซม. พร้อมลิ้นชัก' }
+        ];
+
+        function saveStorage() {
+            localStorage.setItem('mxsa_tag_categories', JSON.stringify(tagCategories));
+            localStorage.setItem('mxsa_tags_list', JSON.stringify(tagsList));
+            localStorage.setItem('mxsa_locations_list', JSON.stringify(locationsList));
+            localStorage.setItem('mxsa_furniture_list', JSON.stringify(furnitureList));
+        }
+
+        // --- App Switching ---
+        function switchApp(app) {
+            currentApp = app;
+            const badge = document.getElementById('currentSystemBadge');
+            const tagsView = document.getElementById('tagsAppView');
+            const furnView = document.getElementById('furnitureAppView');
+            const btnTags = document.getElementById('tabTagsBtn');
+            const btnFurn = document.getElementById('tabFurnitureBtn');
+
+            if (app === 'tags') {
+                badge.textContent = 'คลังป้ายสินค้า';
+                badge.className = 'text-xs font-semibold px-2 py-0.5 bg-sky-100 text-sky-700 rounded-md';
+                tagsView.classList.remove('hidden');
+                furnView.classList.add('hidden');
+                btnTags.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm bg-white text-slate-900';
+                btnFurn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900';
+                renderTags();
+            } else {
+                badge.textContent = 'คลังเฟอร์นิเจอร์';
+                badge.className = 'text-xs font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-md';
+                furnView.classList.remove('hidden');
+                tagsView.classList.add('hidden');
+                btnFurn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm bg-white text-slate-900';
+                btnTags.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900';
+                renderFurniture();
+            }
+        }
+
+        // --- Tags Logic ---
+        function renderCategoryFilters() {
+            const container = document.getElementById('categoryFilterContainer');
+            let html = `<button onclick="setTagCategory('ทั้งหมด')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${activeTagCategory === 'ทั้งหมด' ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}">ทั้งหมด (${tagsList.length})</button>`;
+            
+            tagCategories.forEach(cat => {
+                const count = tagsList.filter(t => t.category === cat).length;
+                const active = activeTagCategory === cat;
+                html += `<button onclick="setTagCategory('${cat}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${active ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}">${cat} (${count})</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function setTagCategory(cat) {
+            activeTagCategory = cat;
+            renderTags();
+        }
+
+        function renderTags() {
+            renderCategoryFilters();
+            const query = document.getElementById('tagSearchInput').value.toLowerCase();
+            const grid = document.getElementById('tagsGrid');
+
+            const filtered = tagsList.filter(t => {
+                const matchCat = activeTagCategory === 'ทั้งหมด' || t.category === activeTagCategory;
+                const matchQuery = t.name.toLowerCase().includes(query) || (t.description && t.description.toLowerCase().includes(query));
+                return matchCat && matchQuery;
+            });
+
+            // Update stats
+            document.getElementById('statTotalTags').textContent = tagsList.length;
+            document.getElementById('statTotalCategories').textContent = tagCategories.length;
+            document.getElementById('statStarredTags').textContent = tagsList.filter(t => t.starred).length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm">ไม่พบข้อมูลป้ายสินค้า</div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(t => {
+                html += `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-48 bg-slate-100 overflow-hidden group">
+                                <img src="${t.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400'}" alt="${t.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                <button onclick="toggleStarTag('${t.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-sm shadow hover:bg-white transition">
+                                    ${t.starred ? '⭐' : '☆'}
+                                </button>
+                                <span class="absolute bottom-3 left-3 px-2.5 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold rounded-md">${t.category}</span>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <div class="flex items-start justify-between">
+                                    <h4 class="font-bold text-slate-800 text-sm">${t.name}</h4>
+                                    ${t.size ? `<span class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${t.size}</span>` : ''}
+                                </div>
+                                <p class="text-xs text-slate-500 line-clamp-2">${t.description || 'ไม่มีรายละเอียดเพิ่มเติม'}</p>
+                            </div>
+                        </div>
+                        <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-2">
+                            <button onclick="openTagModal('${t.id}')" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition">แก้ไข</button>
+                            <button onclick="confirmDeleteTag('${t.id}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg transition">ลบ</button>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        function toggleStarTag(id) {
+            const t = tagsList.find(item => item.id === id);
+            if (t) {
+                t.starred = !t.starred;
+                saveStorage();
+                renderTags();
+            }
+        }
+
+        // --- Furniture Logic ---
+        function renderFurniture() {
+            const query = document.getElementById('furnSearchInput').value.toLowerCase();
+            const tableBody = document.getElementById('furnitureTableBody');
+            const locGrid = document.getElementById('locationGrid');
+
+            const filtered = furnitureList.filter(f => f.name.toLowerCase().includes(query) || f.category.toLowerCase().includes(query));
+
+            // Stats
+            const totalQty = furnitureList.reduce((sum, item) => sum + Number(item.qty), 0);
+            document.getElementById('statTotalFurn').textContent = furnitureList.length;
+            document.getElementById('statTotalLocations').textContent = locationsList.length;
+            document.getElementById('statTotalQty').textContent = totalQty;
+
+            // Render Location Cards
+            let locHtml = '';
+            locationsList.forEach(l => {
+                locHtml += `
+                    <div class="p-3.5 rounded-lg border border-slate-100 bg-slate-50 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-xs text-slate-800">${l.name}</h4>
+                            <button onclick="confirmDeleteLocation('${l.id}')" class="text-slate-400 hover:text-rose-600 text-xs">&times;</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500">${l.desc || 'ไม่มีรายละเอียด'}</p>
+                    </div>
+                `;
+            });
+            locGrid.innerHTML = locHtml || `<div class="col-span-full text-xs text-slate-400 text-center py-2">ยังไม่มีสถานที่ติดตั้ง</div>`;
+
+            // Render Table
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 text-sm">ไม่พบข้อมูลเฟอร์นิเจอร์</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(f => {
+                html += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4">
+                            <img src="${f.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400'}" alt="${f.name}" class="w-10 h-10 rounded-lg object-cover border border-slate-200">
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-bold text-slate-800">${f.name}</div>
+                            <div class="text-xs text-slate-500">${f.description || '-'}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-md">${f.category}</span>
+                        </td>
+                        <td class="py-3 px-4 font-bold text-slate-800">${f.qty} ชิ้น</td>
+                        <td class="py-3 px-4 text-center space-x-1">
+                            <button onclick="openBorrowModal('${f.id}', 'borrow')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-lg transition">เบิกใช้งาน</button>
+                            <button onclick="openBorrowModal('${f.id}', 'return')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg transition">รับคืน</button>
+                        </td>
+                        <td class="py-3 px-4 text-right space-x-1">
+                            <button onclick="openFurnitureModal('${f.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">แก้ไข</button>
+                            <button onclick="confirmDeleteFurniture('${f.id}')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg transition">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        }
+
+        // --- Tag Modals & Handlers ---
+        function openTagModal(id = null) {
+            const modal = document.getElementById('tagModal');
+            const title = document.getElementById('tagModalTitle');
+            const selectCat = document.getElementById('tagCategory');
+            
+            selectCat.innerHTML = tagCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            if (id) {
+                title.textContent = 'แก้ไขป้ายสินค้า';
+                const t = tagsList.find(item => item.id === id);
+                document.getElementById('tagEditId').value = t.id;
+                document.getElementById('tagName').value = t.name;
+                document.getElementById('tagCategory').value = t.category;
+                document.getElementById('tagSize').value = t.size || '';
+                document.getElementById('tagImage').value = t.image || '';
+                document.getElementById('tagDescription').value = t.description || '';
+            } else {
+                title.textContent = 'เพิ่มป้ายสินค้าใหม่';
+                document.getElementById('tagForm').reset();
+                document.getElementById('tagEditId').value = '';
+            }
+            modal.classList.remove('hidden');
+        }
+        function closeTagModal() { document.getElementById('tagModal').classList.add('hidden'); }
+
+        function handleTagFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('tagEditId').value;
+            const data = {
+                name: document.getElementById('tagName').value,
+                category: document.getElementById('tagCategory').value,
+                size: document.getElementById('tagSize').value,
+                image: document.getElementById('tagImage').value,
+                description: document.getElementById('tagDescription').value
+            };
+
+            if (id) {
+                const t = tagsList.find(item => item.id === id);
+                Object.assign(t, data);
+            } else {
+                tagsList.unshift({ id: 't_' + Date.now(), ...data, starred: false });
+            }
+            saveStorage();
+            closeTagModal();
+            renderTags();
+        }
+
+        // --- Category Management ---
+        function openCategoryModal() {
+            renderCategoryListModal();
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+        function closeCategoryModal() { document.getElementById('categoryModal').classList.add('hidden'); }
+
+        function renderCategoryListModal() {
+            const container = document.getElementById('categoryListContainer');
+            let html = '';
+            tagCategories.forEach((cat, index) => {
+                html += `
+                    <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-xs font-semibold">
+                        <span>${cat}</span>
+                        <button onclick="deleteCategory(${index})" class="text-rose-500 hover:text-rose-700 font-bold">ลบ</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryName');
+            const val = input.value.trim();
+            if (val && !tagCategories.includes(val)) {
+                tagCategories.push(val);
+                input.value = '';
+                saveStorage();
+                renderCategoryListModal();
+                renderTags();
+            }
+        }
+
+        function deleteCategory(index) {
+            tagCategories.splice(index, 1);
+            saveStorage();
+            renderCategoryListModal();
+            renderTags();
+        }
+
+        // --- Furniture Modals & Handlers ---
+        function openFurnitureModal(id = null) {
+            const modal = document.getElementById('furnitureModal');
+            const title = document.getElementById('furnitureModalTitle');
+
+            if (id) {
+                title.textContent = 'แก้ไขเฟอร์นิเจอร์';
+                const f = furnitureList.find(item => item.id === id);
+                document.getElementById('furnEditId').value = f.id;
+                document.getElementById('furnName').value = f.name;
+                document.getElementById('furnCategory').value = f.category;
+                document.getElementById('furnQty').value = f.qty;
+                document.getElementById('furnImage').value = f.image || '';
+                document.getElementById('furnDescription').value = f.description || '';
+            } else {
+                title.textContent = 'เพิ่มเฟอร์นิเจอร์ใหม่';
+                document.getElementById('furnitureForm').reset();
+                document.getElementById('furnEditId').value = '';
+            }
+            modal.classList.remove('hidden');
+        }
+        function closeFurnitureModal() { document.getElementById('furnitureModal').classList.add('hidden'); }
+
+        function handleFurnitureFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('furnEditId').value;
+            const data = {
+                name: document.getElementById('furnName').value,
+                category: document.getElementById('furnCategory').value,
+                qty: Number(document.getElementById('furnQty').value),
+                image: document.getElementById('furnImage').value,
+                description: document.getElementById('furnDescription').value
+            };
+
+            if (id) {
+                const f = furnitureList.find(item => item.id === id);
+                Object.assign(f, data);
+            } else {
+                furnitureList.unshift({ id: 'f_' + Date.now(), ...data });
+            }
+            saveStorage();
+            closeFurnitureModal();
+            renderFurniture();
+        }
+
+        // --- Location Management ---
+        function openLocationModal() {
+            renderLocationListModal();
+            document.getElementById('locationModal').classList.remove('hidden');
+        }
+        function closeLocationModal() { document.getElementById('locationModal').classList.add('hidden'); }
+
+        function renderLocationListModal() {
+            const container = document.getElementById('locationListContainer');
+            let html = '';
+            locationsList.forEach((l, index) => {
+                html += `
+                    <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-xs">
+                        <div>
+                            <span class="font-bold text-slate-800">${l.name}</span>
+                            <p class="text-[10px] text-slate-500">${l.desc || ''}</p>
+                        </div>
+                        <button onclick="deleteLocation(${index})" class="text-rose-500 hover:text-rose-700 font-bold">ลบ</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function addLocation() {
+            const nameInput = document.getElementById('newLocName');
+            const descInput = document.getElementById('newLocDesc');
+            const name = nameInput.value.trim();
+            const desc = descInput.value.trim();
+
+            if (name) {
+                locationsList.push({ id: 'l_' + Date.now(), name, desc });
+                nameInput.value = '';
+                descInput.value = '';
+                saveStorage();
+                renderLocationListModal();
+                renderFurniture();
+            }
+        }
+
+        function deleteLocation(index) {
+            locationsList.splice(index, 1);
+            saveStorage();
+            renderLocationListModal();
+            renderFurniture();
+        }
+
+        // --- Borrow / Return Modal ---
+        function openBorrowModal(id, type) {
+            const modal = document.getElementById('borrowReturnModal');
+            const title = document.getElementById('borrowModalTitle');
+            const selectLoc = document.getElementById('borrowLocation');
+
+            document.getElementById('borrowFurnId').value = id;
+            document.getElementById('borrowType').value = type;
+            selectLoc.innerHTML = locationsList.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+
+            title.textContent = type === 'borrow' ? 'เบิกใช้งานเฟอร์นิเจอร์' : 'รับคืนเฟอร์นิเจอร์เข้าคลัง';
+            modal.classList.remove('hidden');
+        }
+        function closeBorrowModal() { document.getElementById('borrowReturnModal').classList.add('hidden'); }
+
+        function handleBorrowSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('borrowFurnId').value;
+            const type = document.getElementById('borrowType').value;
+            const qty = Number(document.getElementById('borrowQty').value);
+            const locName = document.getElementById('borrowLocation').value;
+
+            const f = furnitureList.find(item => item.id === id);
+            if (f) {
+                if (type === 'borrow') {
+                    if (f.qty < qty) {
+                        alert('จำนวนในคลังไม่เพียงพอสำหรับการเบิก');
+                        return;
+                    }
+                    f.qty -= qty;
+                } else {
+                    f.qty += qty;
+                }
+                saveStorage();
+                closeBorrowModal();
+                renderFurniture();
+            }
+        }
+
+        // --- Delete Confirmations ---
+        function confirmDeleteTag(id) {
+            openDeleteModal('คุณต้องการลบป้ายสินค้านี้ใช่หรือไม่?', () => {
+                tagsList = tagsList.filter(t => t.id !== id);
+                saveStorage();
+                renderTags();
+                closeDeleteModal();
+            });
+        }
+
+        function confirmDeleteFurniture(id) {
+            openDeleteModal('คุณต้องการลบรายการเฟอร์นิเจอร์นี้ใช่หรือไม่?', () => {
+                furnitureList = furnitureList.filter(f => f.id !== id);
+                saveStorage();
+                renderFurniture();
+                closeDeleteModal();
+            });
+        }
+
+        function confirmDeleteLocation(id) {
+            openDeleteModal('คุณต้องการลบสถานที่นี้ใช่หรือไม่?', () => {
+                locationsList = locationsList.filter(l => l.id !== id);
+                saveStorage();
+                renderFurniture();
+                closeDeleteModal();
+            });
+        }
+
+        function openDeleteModal(text, callback) {
+            document.getElementById('deleteModalText').textContent = text;
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.onclick = callback;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
+
+        // --- Initial Load ---
+        window.onload = function() {
+            renderTags();
+            renderFurniture();
+        };
+    </script>
+</body>
+</html>
